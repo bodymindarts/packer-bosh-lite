@@ -44,6 +44,11 @@
 			"Rev": "f8f7b7a34c1be06058f5aca23a51247db12cdbc5"
 		},
 		{
+			"ImportPath": "github.com/mitchellh/packer/helper/config",
+			"Comment": "v0.8.6",
+			"Rev": "f8f7b7a34c1be06058f5aca23a51247db12cdbc5"
+		},
+		{
 			"ImportPath": "github.com/mitchellh/packer/packer",
 			"Comment": "v0.8.6",
 			"Rev": "f8f7b7a34c1be06058f5aca23a51247db12cdbc5"

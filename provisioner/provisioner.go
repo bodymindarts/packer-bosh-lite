@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/mitchellh/packer/common"
 	"github.com/mitchellh/packer/helper/config"
 	"github.com/mitchellh/packer/packer"
+	"github.com/mitchellh/packer/template/interpolate"
 )
 
 type Config struct {
-	metadata *mapstructure.Metadata
-
 	common.PackerConfig `mapstructure:",squash"`
 
 	Stemcell        string `mapstructure:"stemcell"`
@@ -22,6 +20,8 @@ type Config struct {
 	ReleaseVersion string `mapstructure:"release_version"`
 
 	Manifest string `mapstructure:"deployment_manifest"`
+
+	ctx interpolate.Context
 }
 
 type Provisioner struct {
@@ -29,11 +29,14 @@ type Provisioner struct {
 }
 
 func (p *Provisioner) Prepare(raws ...interface{}) error {
+
 	err := config.Decode(&p.config, &config.DecodeOpts{
-		Interpolate:        false,
-		InterpolateContext: nil,
-		InterpolateFilter:  nil},
-		raws...)
+		Interpolate:        true,
+		InterpolateContext: &p.config.ctx,
+		InterpolateFilter: &interpolate.RenderFilter{
+			Exclude: []string{},
+		},
+	}, raws...)
 	if err != nil {
 		return err
 	}
@@ -124,9 +127,10 @@ func (p *Provisioner) uploadDeploymentManifest(ui packer.Ui, comm packer.Communi
 	err = comm.Upload(fmt.Sprintf("~/deployments/%s", p.config.Manifest), f, &fi)
 	if err != nil {
 		ui.Error(fmt.Sprintf("Upload of Manifest failed: %s", err))
+		return err
 	}
 
-	return err
+	return nil
 }
 
 func (p *Provisioner) deploy(ui packer.Ui, comm packer.Communicator) error {
