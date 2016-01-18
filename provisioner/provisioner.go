@@ -19,7 +19,7 @@ type Config struct {
 	Release        string
 	ReleaseVersion string `mapstructure:"release_version"`
 
-	Manifest string
+	Manifest string `mapstructure:"deployment_manifest"`
 
 	ctx interpolate.Context
 }
@@ -130,10 +130,44 @@ func (p *Provisioner) uploadDeploymentManifest(ui packer.Ui, comm packer.Communi
 		return err
 	}
 
+	cmd = fmt.Sprintf("sed -i \"s/director_uuid: .*/director_uuid: $(bosh status --uuid)/\" ~/deployments/%s", p.config.Manifest)
+
+	remoteCmd = &packer.RemoteCmd{Command: cmd}
+	err = remoteCmd.StartWithUi(comm, ui)
+	if err != nil {
+		return fmt.Errorf("Starting command: %s", err)
+	}
+
+	if remoteCmd.ExitStatus != 0 {
+		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
+	}
 	return nil
 }
 
 func (p *Provisioner) deploy(ui packer.Ui, comm packer.Communicator) error {
 	ui.Say("Deploying")
+
+	cmd := fmt.Sprintf("bosh deployment ~/deployments/%s", p.config.Manifest)
+	remoteCmd := &packer.RemoteCmd{Command: cmd}
+	err := remoteCmd.StartWithUi(comm, ui)
+	if err != nil {
+		return fmt.Errorf("Starting command: %s", err)
+	}
+
+	if remoteCmd.ExitStatus != 0 {
+		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
+	}
+
+	cmd = "bosh -n deploy"
+	remoteCmd = &packer.RemoteCmd{Command: cmd}
+	err = remoteCmd.StartWithUi(comm, ui)
+	if err != nil {
+		return fmt.Errorf("Starting command: %s", err)
+	}
+
+	if remoteCmd.ExitStatus != 0 {
+		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
+	}
+
 	return nil
 }
