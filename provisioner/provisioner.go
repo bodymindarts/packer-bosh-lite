@@ -13,13 +13,13 @@ import (
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 
-	Stemcell        string `mapstructure:"stemcell"`
+	Stemcell        string
 	StemcellVersion string `mapstructure:"stemcell_version"`
 
-	Release        string `mapstructure:"release"`
+	Release        string
 	ReleaseVersion string `mapstructure:"release_version"`
 
-	Manifest string `mapstructure:"deployment_manifest"`
+	Manifest string
 
 	ctx interpolate.Context
 }
