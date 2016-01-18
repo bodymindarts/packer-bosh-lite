@@ -117,7 +117,18 @@ func (p *Provisioner) deploy(ui packer.Ui, comm packer.Communicator) error {
 		return err
 	}
 
-	return runCmd("bosh -n deploy", ui, comm)
+	cmd = "sudo mkdir -p /vagrant/tmp/compiled_package_cache && sudo chmod -R a+rw /vagrant"
+	err = runCmd(cmd, ui, comm)
+	if err != nil {
+		return err
+	}
+
+	err = runCmd("bosh -n deploy", ui, comm)
+	if err != nil {
+		return err
+	}
+
+	return runCmd("sudo rm -rf /vagrant", ui, comm)
 }
 
 func runCmd(cmd string, ui packer.Ui, comm packer.Communicator) error {
