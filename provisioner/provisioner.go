@@ -50,6 +50,7 @@ func (p *Provisioner) Provision(ui packer.Ui, comm packer.Communicator) error {
 	p.uploadBoshRelease(ui, comm)
 	p.uploadDeploymentManifest(ui, comm)
 	p.deploy(ui, comm)
+
 	return nil
 }
 
@@ -65,17 +66,7 @@ func (p *Provisioner) uploadStemcell(ui packer.Ui, comm packer.Communicator) err
 		cmd += fmt.Sprintf("?v=%s", p.config.StemcellVersion)
 	}
 
-	remoteCmd := &packer.RemoteCmd{Command: cmd}
-	err := remoteCmd.StartWithUi(comm, ui)
-	if err != nil {
-		return fmt.Errorf("Starting command: %s", err)
-	}
-
-	if remoteCmd.ExitStatus != 0 {
-		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
-	}
-
-	return nil
+	return runCmd(cmd, ui, comm)
 }
 
 func (p *Provisioner) uploadBoshRelease(ui packer.Ui, comm packer.Communicator) error {
@@ -86,31 +77,15 @@ func (p *Provisioner) uploadBoshRelease(ui packer.Ui, comm packer.Communicator) 
 		cmd += fmt.Sprintf("?v=%s", p.config.ReleaseVersion)
 	}
 
-	remoteCmd := &packer.RemoteCmd{Command: cmd}
-	err := remoteCmd.StartWithUi(comm, ui)
-	if err != nil {
-		return fmt.Errorf("Starting command: %s", err)
-	}
-
-	if remoteCmd.ExitStatus != 0 {
-		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
-	}
-
-	return nil
+	return runCmd(cmd, ui, comm)
 }
 
 func (p *Provisioner) uploadDeploymentManifest(ui packer.Ui, comm packer.Communicator) error {
 	ui.Say(fmt.Sprintf("Uploading manifest: %s", p.config.Manifest))
 
-	cmd := "mkdir ~/deployments"
-	remoteCmd := &packer.RemoteCmd{Command: cmd}
-	err := remoteCmd.StartWithUi(comm, ui)
+	err := runCmd("mkdir ~/deployments", ui, comm)
 	if err != nil {
-		return fmt.Errorf("Starting command: %s", err)
-	}
-
-	if remoteCmd.ExitStatus != 0 {
-		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
+		return err
 	}
 
 	f, err := os.Open(p.config.Manifest)
@@ -126,41 +101,29 @@ func (p *Provisioner) uploadDeploymentManifest(ui packer.Ui, comm packer.Communi
 
 	err = comm.Upload(fmt.Sprintf("~/deployments/%s", p.config.Manifest), f, &fi)
 	if err != nil {
-		ui.Error(fmt.Sprintf("Upload of Manifest failed: %s", err))
 		return err
 	}
 
-	cmd = fmt.Sprintf("sed -i \"s/director_uuid: .*/director_uuid: $(bosh status --uuid)/\" ~/deployments/%s", p.config.Manifest)
-
-	remoteCmd = &packer.RemoteCmd{Command: cmd}
-	err = remoteCmd.StartWithUi(comm, ui)
-	if err != nil {
-		return fmt.Errorf("Starting command: %s", err)
-	}
-
-	if remoteCmd.ExitStatus != 0 {
-		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
-	}
-	return nil
+	cmd := fmt.Sprintf("sed -i \"s/director_uuid: .*/director_uuid: $(bosh status --uuid)/\" ~/deployments/%s", p.config.Manifest)
+	return runCmd(cmd, ui, comm)
 }
 
 func (p *Provisioner) deploy(ui packer.Ui, comm packer.Communicator) error {
 	ui.Say("Deploying")
 
 	cmd := fmt.Sprintf("bosh deployment ~/deployments/%s", p.config.Manifest)
-	remoteCmd := &packer.RemoteCmd{Command: cmd}
-	err := remoteCmd.StartWithUi(comm, ui)
+	err := runCmd(cmd, ui, comm)
 	if err != nil {
-		return fmt.Errorf("Starting command: %s", err)
+		return err
 	}
 
-	if remoteCmd.ExitStatus != 0 {
-		return fmt.Errorf("Non-zero exit status: %d", remoteCmd.ExitStatus)
-	}
+	return runCmd("bosh -n deploy", ui, comm)
+}
 
-	cmd = "bosh -n deploy"
-	remoteCmd = &packer.RemoteCmd{Command: cmd}
-	err = remoteCmd.StartWithUi(comm, ui)
+func runCmd(cmd string, ui packer.Ui, comm packer.Communicator) error {
+	remoteCmd := &packer.RemoteCmd{Command: cmd}
+
+	err := remoteCmd.StartWithUi(comm, ui)
 	if err != nil {
 		return fmt.Errorf("Starting command: %s", err)
 	}
