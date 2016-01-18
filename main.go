@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/mitchellh/packer/packer/plugin"
 	"github.com/bodymindarts/packer-bosh-lite/provisioner"
+	"github.com/mitchellh/packer/packer/plugin"
 )
 
 func main() {

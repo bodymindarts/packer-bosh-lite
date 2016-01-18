@@ -23,6 +23,10 @@
 			"Rev": "df949784da9ed028ee76df44652e42d37a09d7e4"
 		},
 		{
+			"ImportPath": "github.com/mitchellh/go-fs",
+			"Rev": "a34c1b9334e86165685a9449b782f20465eb8c69"
+		},
+		{
 			"ImportPath": "github.com/mitchellh/iochan",
 			"Rev": "87b45ffd0e9581375c491fef3d32130bb15c5bd7"
 		},
@@ -31,7 +35,11 @@
 			"Rev": "281073eb9eb092240d33ef253c404f1cca550309"
 		},
 		{
-			"ImportPath": "github.com/mitchellh/packer/common/uuid",
+			"ImportPath": "github.com/mitchellh/multistep",
+			"Rev": "162146fc57112954184d90266f4733e900ed05a5"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/packer/common",
 			"Comment": "v0.8.6",
 			"Rev": "f8f7b7a34c1be06058f5aca23a51247db12cdbc5"
 		},
